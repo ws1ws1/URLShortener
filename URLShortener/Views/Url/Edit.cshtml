@@ -1,0 +1,17 @@
+﻿@model UrlInfo
+
+<h2>Редактирование ссылки</h2>
+<form asp-action="edit" asp-controller="url" asp-route-id="@Model.Id">
+    <div class="form-group mb-2">
+        <label class="form-label" asp-for="LongUrl">Длинный URL</label><br />
+        <input class="form-control" type="text" asp-for="LongUrl" value="@Model.LongUrl" />
+        <span asp-validation-for="LongUrl" class="text-danger"></span>
+        <input type="text" asp-for="ShortUrl" value="@Model.ShortUrl" hidden />
+        <input type="text" asp-for="DateCreate" value="@Model.DateCreate" hidden />
+        <input type="text" asp-for="NumberOfClicks" value="@Model.NumberOfClicks" hidden />
+    </div>
+    <div class="form-group">
+        <input class="btn btn-primary" type="submit" value="Сохранить" />
+        <a href="/" class="btn btn-primary" role="button">Отмена</a>
+    </div>
+</form>

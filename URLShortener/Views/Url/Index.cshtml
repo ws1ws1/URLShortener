@@ -1,0 +1,28 @@
+﻿@model IEnumerable<UrlInfo>
+
+<div class="mb-4">
+    <a asp-action="Create" class="h5">Создать короткий Url</a>
+</div>
+
+<table class="table">
+    <thead>
+        <tr><th>Длинный URL</th><th>Короткий URL</th><th>Дата создания</th><th>Количество переходов</th><th>Действия</th></tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            <tr>
+                <td>@item.LongUrl</td>
+                <td><a asp-action="Increment" asp-controller="url" asp-route-id="@item.Id" class="shortLink" longUrl="@item.LongUrl">@item.ShortUrl</a></td>
+                <td>@item.DateCreate</td>
+                <td>@item.NumberOfClicks</td>
+                <td>
+                    <div><a asp-action="Edit" asp-controller="url" asp-route-id="@item.Id">Изменить</a></div>
+                    <div><a asp-action="Delete" asp-controller="url" asp-route-id="@item.Id">Удалить</a></div>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<script src="~/js/JavaScript.js"></script>
