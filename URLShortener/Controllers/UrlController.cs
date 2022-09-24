@@ -66,6 +66,7 @@ namespace URLShortener.Controllers
 
             if (ModelState.IsValid)
             {
+                url.ShortUrl = Encoder.Encode(url.LongUrl);
                 _db.Urls.Update(url);
                 _db.SaveChanges();
 
