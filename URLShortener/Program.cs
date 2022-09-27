@@ -14,11 +14,17 @@ builder.Services.AddDbContext<ApplicationContext>(options => options.UseMySql(co
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
-if (!app.Environment.IsDevelopment())
+using (var scope = app.Services.CreateScope())
 {
-    app.UseExceptionHandler("/Home/Error");
+    var context = scope.ServiceProvider.GetService<ApplicationContext>();
+    context.Database.Migrate();
 }
+
+    // Configure the HTTP request pipeline.
+    if (!app.Environment.IsDevelopment())
+    {
+        app.UseExceptionHandler("/Home/Error");
+    }
 
 app.UseStaticFiles();
 
