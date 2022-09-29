@@ -32,7 +32,7 @@
                 i = i / Base;
             }
 
-            string result = "sh.rt/" + string.Join(string.Empty, str.Reverse());
+            string result = string.Join(string.Empty, str.Reverse());
 
             return result;
         }

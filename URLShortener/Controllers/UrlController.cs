@@ -1,20 +1,22 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using URLShortener.Data;
 using URLShortener.Models;
+using URLShortener.Services;
 
 namespace URLShortener.Controllers
 {
     public class UrlController : Controller
     {
-        ApplicationContext _db;
-        public UrlController(ApplicationContext db)
+        IUrlInfoService _urlInfoService;
+
+        public UrlController(IUrlInfoService urlInfoService)
         {
-            _db = db;
+            _urlInfoService = urlInfoService;
         }
 
         public IActionResult Index()
         {
-            var listUrls = _db.Urls;
+            var listUrls = _urlInfoService.GetAll();
             return View(listUrls);
         }
 
@@ -26,19 +28,18 @@ namespace URLShortener.Controllers
         [HttpPost]
         public IActionResult Create(UrlInfo url)
         {
-            if (_db.Urls.FirstOrDefault(x => x.LongUrl == url.LongUrl) != null) // замена атрибуту Remote(он почему-то не сработал, попробую еще разобраться)
+            if (_urlInfoService.GetByLongUrl(url.LongUrl) != null) // замена атрибуту Remote(он почему-то не сработал, попробую еще разобраться)
             {
-                ModelState.AddModelError(nameof(url.LongUrl), "Такой Url уже зарегестрирован");
-            }
+                ModelState.AddModelError(nameof(UrlInfo.LongUrl), "Такой Url уже зарегестрирован");
+            }            
 
             if (ModelState.IsValid)
-            {                
-                url.ShortUrl = Encoder.Encode(url.LongUrl);
+            {
+                url.ShortUrl = Request.Host + "/" + Encoder.Encode(url.LongUrl);
                 url.DateCreate = DateTime.Now;
                 url.NumberOfClicks = 0;
 
-                _db.Urls.Add(url);
-                _db.SaveChanges();
+                _urlInfoService.Create(url);
 
                 return RedirectToAction("Index");
             }
@@ -49,7 +50,7 @@ namespace URLShortener.Controllers
         {
             if (id != null)
             {
-                UrlInfo? url = _db.Urls.FirstOrDefault(x => x.Id == id);
+                UrlInfo? url = _urlInfoService.GetById(id);
                 if (url != null)
                     return View(url);
             }
@@ -59,16 +60,15 @@ namespace URLShortener.Controllers
         [HttpPost]
         public IActionResult Edit(UrlInfo url)
         {
-            if (_db.Urls.FirstOrDefault(x => x.LongUrl == url.LongUrl) != null)
+            if (_urlInfoService.GetByLongUrl(url.LongUrl) != null)
             {
-                ModelState.AddModelError(nameof(url.LongUrl), "Такой Url уже зарегестрирован");
+                ModelState.AddModelError(nameof(UrlInfo.LongUrl), "Такой Url уже зарегестрирован");
             }
 
             if (ModelState.IsValid)
             {
-                url.ShortUrl = Encoder.Encode(url.LongUrl);
-                _db.Urls.Update(url);
-                _db.SaveChanges();
+                url.ShortUrl = Request.Host + "/" + Encoder.Encode(url.LongUrl);
+                _urlInfoService.Update(url);
 
                 return RedirectToAction("Index");
             }
@@ -79,29 +79,58 @@ namespace URLShortener.Controllers
         {
             if (id != null)
             {
-                UrlInfo? url = _db.Urls.FirstOrDefault(x => x.Id == id);
+                UrlInfo? url = _urlInfoService.GetById(id);
                 if (url != null)
                 {
-                    _db.Urls.Remove(url);
-                    _db.SaveChanges();                   
+                    _urlInfoService.Delete(url);
                 }                    
             }
             return RedirectToAction("Index");
         }
-                
-        public IActionResult Increment(int? id)
+
+        [HttpGet("/{path:required}")]
+        public IActionResult RedirectTo(string path)
         {
-            if (id != null)
+            if (path == null)
             {
-                UrlInfo? url = _db.Urls.FirstOrDefault(x => x.Id == id);
-                if (url != null)
-                {
-                    url.NumberOfClicks++;
-                    _db.Urls.Update(url);
-                    _db.SaveChanges();
-                }                    
+                return NotFound();
             }
-            return RedirectToAction("Index");
+
+            string shUrl = Request.Host + "/" + path;
+            var url = _urlInfoService.GetByShortUrl(shUrl);
+
+            if (url == null)
+            {
+                return NotFound();
+            }
+            else
+            {
+                url.NumberOfClicks++;
+                _urlInfoService.Update(url);
+                return Redirect(url.LongUrl);
+            }
         }
+
+        // Переход по ссылке со страницы Index
+        public IActionResult LinkRedirectTo(int? id)
+        {
+            if (id == null)
+            {
+                return NotFound();
+            }
+
+            var url = _urlInfoService.GetById(id);
+            if (url == null)
+            {
+                return NotFound();
+            }
+            else
+            {
+                url.NumberOfClicks++;
+                _urlInfoService.Update(url);
+                return Redirect(url.LongUrl);
+            }
+        }
+
     }
 }
